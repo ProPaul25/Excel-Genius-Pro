@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Excel Genius Pro</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-color: #ffffff;
+            --text-color: #212529;
+            --card-bg: #ffffff;
+        }
+
+        .dark-mode {
+            --bg-color: #1a1a1a;
+            --text-color: #ffffff;
+            --card-bg: #2d2d2d;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: all 0.3s ease;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border: none;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        }
+
+        .nav-tabs .nav-link.active {
+            border-bottom: 3px solid #0d6efd !important;
+        }
+
+        .chart-container {
+            height: 400px;
+            position: relative;
+        }
+
+        .formula-breakdown {
+            background: rgba(13, 110, 253, 0.1);
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+
+        pre {
+            background: rgba(0, 0, 0, 0.05);
+            padding: 10px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container py-4">
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="display-5 fw-bold">Excel Genius Pro</h1>
+            <button class="btn btn-outline-secondary" onclick="toggleDarkMode()">🌓 Toggle Dark Mode</button>
+        </div>
+
+        <!-- Tabs -->
+        <ul class="nav nav-tabs mb-4" id="mainTabs">
+            <li class="nav-item">
+                <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#formulaTab">Formula Reference</button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#dataVizTab">Data Visualization</button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#comparisonTab">Formula Comparison</button>
+            </li>
+        </ul>
+
+        <!-- Tab Content -->
+        <div class="tab-content">
+            <!-- Formula Reference Tab -->
+            <div class="tab-pane fade show active" id="formulaTab">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card mb-4">
+                            <div class="card-header bg-primary text-white">
+                                Formula Reference
+                            </div>
+                            <div class="card-body">
+                                <select class="form-select mb-3" id="formulaDropdown" onchange="showFormulaDetails()">
+                                    <option value="">Select a formula...</option>
+                                    <option value="SUM">SUM</option>
+                                    <option value="AVERAGE">AVERAGE</option>
+                                    <option value="VLOOKUP">VLOOKUP</option>
+                                    <option value="INDEX-MATCH">INDEX-MATCH</option>
+                                    <option value="IF">IF</option>
+                                    <option value="COUNTIF">COUNTIF</option>
+                                    <option value="CONCATENATE">CONCATENATE</option>
+                                </select>
+                                <div id="formulaDetails"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header bg-success text-white">
+                                Formula Explainer
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <input type="text" class="form-control" id="formulaInput" 
+                                           placeholder="Enter formula (e.g., =VLOOKUP(A2,B2:E10,3,FALSE))">
+                                </div>
+                                <button class="btn btn-success" onclick="explainFormula()">Explain Formula</button>
+                                <div class="mt-3" id="formulaExplanation"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Data Visualization Tab -->
+            <div class="tab-pane fade" id="dataVizTab">
+                <div class="card">
+                    <div class="card-header bg-info text-white">
+                        Data Visualization
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label>Chart Type</label>
+                                    <select class="form-select" id="chartType">
+                                        <option value="bar">Bar Chart</option>
+                                        <option value="line">Line Chart</option>
+                                        <option value="pie">Pie Chart</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label>Data (comma separated)</label>
+                                    <input type="text" class="form-control" id="chartData" value="20,35,45,60">
+                                </div>
+                                <div class="mb-3">
+                                    <label>Labels (comma separated)</label>
+                                    <input type="text" class="form-control" id="chartLabels" value="Q1,Q2,Q3,Q4">
+                                </div>
+                                <button class="btn btn-primary" onclick="updateCustomChart()">Generate Chart</button>
+                            </div>
+                            <div class="col-md-8">
+                                <div class="chart-container">
+                                    <canvas id="customChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Formula Comparison Tab -->
+            <div class="tab-pane fade" id="comparisonTab">
+                <div class="card">
+                    <div class="card-header bg-warning text-dark">
+                        Index-Match vs VLOOKUP
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label>Lookup Value:</label>
+                                    <input type="text" class="form-control" id="lookupValue" value="A2">
+                                </div>
+                                <div class="mb-3">
+                                    <label>Table Range:</label>
+                                    <input type="text" class="form-control" id="tableRange" value="B2:E10">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label>Return Column (VLOOKUP):</label>
+                                    <input type="number" class="form-control" id="colIndex" value="3">
+                                </div>
+                                <div class="mb-3">
+                                    <label>Lookup Column (Index-Match):</label>
+                                    <input type="text" class="form-control" id="lookupColumn" value="B2:B10">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card mb-3">
+                                    <div class="card-header bg-primary text-white">
+                                        VLOOKUP Formula
+                                    </div>
+                                    <div class="card-body">
+                                        <code id="vlookupFormula"></code>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card mb-3">
+                                    <div class="card-header bg-success text-white">
+                                        Index-Match Formula
+                                    </div>
+                                    <div class="card-body">
+                                        <code id="indexMatchFormula"></code>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Dark Mode Toggle
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
+            updateChartColors();
+        }
+
+        // Initialize Dark Mode
+        if (localStorage.getItem('darkMode') === 'true') {
+            document.body.classList.add('dark-mode');
+        }
+
+        // Chart Configuration
+        let customChart = null;
+        const ctx = document.getElementById('customChart').getContext('2d');
+
+        function updateCustomChart() {
+            const dataValues = document.getElementById('chartData').value.split(',').map(Number);
+            const labels = document.getElementById('chartLabels').value.split(',');
+            const chartType = document.getElementById('chartType').value;
+
+            if (customChart) customChart.destroy();
+
+            customChart = new Chart(ctx, {
+                type: chartType,
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Dataset',
+                        data: dataValues,
+                        backgroundColor: [
+                            'rgba(255, 99, 132, 0.5)',
+                            'rgba(54, 162, 235, 0.5)',
+                            'rgba(255, 206, 86, 0.5)',
+                            'rgba(75, 192, 192, 0.5)'
+                        ],
+                        borderColor: [
+                            'rgba(255, 99, 132, 1)',
+                            'rgba(54, 162, 235, 1)',
+                            'rgba(255, 206, 86, 1)',
+                            'rgba(75, 192, 192, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            ticks: { color: getTextColor() },
+                            grid: { color: 'rgba(200, 200, 200, 0.2)' }
+                        },
+                        x: {
+                            ticks: { color: getTextColor() },
+                            grid: { color: 'rgba(200, 200, 200, 0.2)' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function getTextColor() {
+            return document.body.classList.contains('dark-mode') ? '#fff' : '#333';
+        }
+
+        function updateChartColors() {
+            if (customChart) {
+                customChart.options.scales.x.ticks.color = getTextColor();
+                customChart.options.scales.y.ticks.color = getTextColor();
+                customChart.update();
+            }
+        }
+
+        // Initialize first chart
+        updateCustomChart();
+
+        // Formula Reference Data
+        const formulaData = {
+            SUM: {
+                syntax: '=SUM(number1, [number2], ...)',
+                description: 'Adds all numbers in a range of cells',
+                example: '=SUM(A1:A10) → Sum of cells A1 to A10'
+            },
+            AVERAGE: {
+                syntax: '=AVERAGE(number1, [number2], ...)',
+                description: 'Calculates the average of numbers in a range',
+                example: '=AVERAGE(B2:B20) → Average of cells B2 to B20'
+            },
+            VLOOKUP: {
+                syntax: '=VLOOKUP(lookup_value, table_array, col_index_num, [range_lookup])',
+                description: 'Vertical lookup in first column of a table',
+                example: '=VLOOKUP("Apple", A1:B10, 2, FALSE) → Find Apple in A1:A10, return B value'
+            },
+            'INDEX-MATCH': {
+                syntax: '=INDEX(return_range, MATCH(lookup_value, lookup_range, 0))',
+                description: 'Powerful combination for flexible lookups',
+                example: '=INDEX(C1:C10, MATCH("Apple", A1:A10, 0)) → Find Apple in A1:A10, return C value'
+            },
+            IF: {
+                syntax: '=IF(logical_test, value_if_true, [value_if_false])',
+                description: 'Conditional statement returning different values',
+                example: '=IF(A1>50, "Pass", "Fail") → Returns Pass if A1 >50'
+            },
+            COUNTIF: {
+                syntax: '=COUNTIF(range, criteria)',
+                description: 'Counts cells meeting specific criteria',
+                example: '=COUNTIF(C1:C100, ">100") → Counts cells >100'
+            },
+            CONCATENATE: {
+                syntax: '=CONCATENATE(text1, [text2], ...)',
+                description: 'Joins text strings into one string',
+                example: '=CONCATENATE(A2, " ", B2) → Combines A2 and B2 with space'
+            }
+        };
+
+        // Show Formula Details
+        function showFormulaDetails() {
+            const formula = document.getElementById('formulaDropdown').value;
+            const detailsDiv = document.getElementById('formulaDetails');
+            
+            if (formula && formulaData[formula]) {
+                detailsDiv.innerHTML = `
+                    <div class="card">
+                        <div class="card-body">
+                            <h5>${formula}</h5>
+                            <p><strong>Syntax:</strong><br><code>${formulaData[formula].syntax}</code></p>
+                            <p><strong>Description:</strong><br>${formulaData[formula].description}</p>
+                            <p><strong>Example:</strong><br><code>${formulaData[formula].example}</code></p>
+                        </div>
+                    </div>
+                `;
+            } else {
+                detailsDiv.innerHTML = '<p class="text-muted">Select a formula from the dropdown</p>';
+            }
+        }
+
+        // Formula Explainer
+        function explainFormula() {
+            const formula = document.getElementById('formulaInput').value.trim();
+            const explanationDiv = document.getElementById('formulaExplanation');
+            explanationDiv.innerHTML = '';
+            
+            try {
+                const explanation = parseFormula(formula);
+                explanationDiv.innerHTML = `
+                    <div class="formula-breakdown">
+                        <h5>Formula Breakdown</h5>
+                        ${explanation.map(item => `
+                            <div class="mb-2">
+                                <strong>${item.part}:</strong> ${item.description}
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            } catch (error) {
+                explanationDiv.innerHTML = `
+                    <div class="alert alert-danger">
+                        Error: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        function parseFormula(formula) {
+            const cleanFormula = formula.replace(/^=/, '').replace(/\s/g, '');
+            const parts = [];
+            
+            const functionMatch = cleanFormula.match(/^([A-Z]+)/i);
+            if (!functionMatch) throw new Error('Unsupported formula structure');
+            
+            const func = functionMatch[1].toUpperCase();
+            
+            switch(func) {
+                case 'VLOOKUP':
+                    const vlookupParts = cleanFormula.match(/VLOOKUP\((.+?),(.+?),(\d+),([A-Z]+)\)/i);
+                    if (!vlookupParts) throw new Error('Invalid VLOOKUP format');
+                    return [
+                        { part: 'Function', description: 'Vertical Lookup' },
+                        { part: 'Lookup Value', description: vlookupParts[1] },
+                        { part: 'Table Range', description: vlookupParts[2] },
+                        { part: 'Column Index', description: vlookupParts[3] },
+                        { part: 'Exact Match', description: vlookupParts[4] === 'FALSE' ? 'Yes' : 'No' }
+                    ];
+                
+                case 'INDEX':
+                    const indexMatch = cleanFormula.match(/INDEX\((.+?),MATCH\((.+?),(.+?),0\)\)/i);
+                    if (indexMatch) {
+                        return [
+                            { part: 'Function', description: 'Index-Match Combination' },
+                            { part: 'Return Range', description: indexMatch[1] },
+                            { part: 'Lookup Value', description: indexMatch[2] },
+                            { part: 'Lookup Range', description: indexMatch[3] }
+                        ];
+                    }
+                    break;
+                
+                case 'SUM':
+                    const sumRange = cleanFormula.match(/\((.*?)\)/)[1];
+                    return [
+                        { part: 'Function', description: 'Summation' },
+                        { part: 'Range', description: sumRange }
+                    ];
+                
+                case 'IF':
+                    const ifParts = cleanFormula.match(/IF\((.+?),(.+?),(.+?)\)/i);
+                    return [
+                        { part: 'Function', description: 'Conditional Statement' },
+                        { part: 'Condition', description: ifParts[1] },
+                        { part: 'If True', description: ifParts[2] },
+                        { part: 'If False', description: ifParts[3] }
+                    ];
+                
+                default:
+                    throw new Error('Function not supported in explainer');
+            }
+        }
+
+        // Formula Comparison
+        function updateComparisonFormulas() {
+            const lookupValue = document.getElementById('lookupValue').value;
+            const tableRange = document.getElementById('tableRange').value;
+            const colIndex = document.getElementById('colIndex').value;
+            const lookupColumn = document.getElementById('lookupColumn').value;
+
+            document.getElementById('vlookupFormula').textContent = 
+                `=VLOOKUP(${lookupValue}, ${tableRange}, ${colIndex}, FALSE)`;
+
+            document.getElementById('indexMatchFormula').textContent = 
+                `=INDEX(${tableRange}, MATCH(${lookupValue}, ${lookupColumn}, 0))`;
+        }
+
+        // Initialize comparison inputs
+        document.querySelectorAll('#comparisonTab input').forEach(input => {
+            input.addEventListener('input', updateComparisonFormulas);
+        });
+        updateComparisonFormulas();
+    </script>
+</body>
+</html>
